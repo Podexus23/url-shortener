@@ -1,8 +1,7 @@
 import 'dotenv/config';
 
-export function hello() {
-  console.log('Hello templater');
-  console.log(process.env.HELLO);
+export function main() {
+  console.log(`Main is running on ${process.env.PORT}`);
 }
 
-hello();
+main();

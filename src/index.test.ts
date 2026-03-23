@@ -1,4 +1,4 @@
-import { hello } from './index.js';
+import { main } from './index.js';
 
 describe('hello', () => {
   let logSpy;
@@ -8,9 +8,8 @@ describe('hello', () => {
   it('should says hello', () => {
     logSpy = vi.spyOn(console, 'log');
 
-    hello();
+    main();
 
     expect(logSpy).toHaveBeenCalled();
-    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('Hello'));
   });
 });

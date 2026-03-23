@@ -1,14 +1,14 @@
 {
-  "name": "ts-node-template",
+  "name": "url-shortener",
   "version": "0.0.1",
-  "description": "Configured template to start working with TS, Node JS",
-  "homepage": "https://github.com/Podexus23/ts-node-template#readme",
+  "description": "Application to process long URLs to short ones",
+  "homepage": "https://github.com/Podexus23/url-shortener#readme",
   "bugs": {
-    "url": "https://github.com/Podexus23/ts-node-template/issues"
+    "url": "https://github.com/Podexus23/url-shortener/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Podexus23/ts-node-template.git"
+    "url": "git+https://github.com/Podexus23/url-shortener.git"
   },
   "license": "ISC",
   "author": "Podexus23",
