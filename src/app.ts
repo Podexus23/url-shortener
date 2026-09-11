@@ -33,12 +33,8 @@ app.post('/shorten', async (req: Request<object, object, UrlQuery>, res: Respons
   }
 });
 
-app.get('/shorten/:code', async (req: Request, res: Response) => {
+app.get('/shorten/:code', async (req: Request<{ code: string }>, res: Response) => {
   const { code } = req.params;
-  if (!code) {
-    res.status(404).json({ error: 'Short URL not found' });
-    return;
-  }
 
   const doc = await Url.findOne({ shortCode: code });
 
@@ -47,6 +43,33 @@ app.get('/shorten/:code', async (req: Request, res: Response) => {
     return;
   }
   res.status(200).json(doc);
+});
+
+app.put('/shorten/:code', async (req: Request<{ code: string }, object, UrlQuery>, res: Response) => {
+  const { code } = req.params;
+  const { url } = req.body;
+
+  const doc = await Url.findOneAndUpdate({ shortCode: code }, { $set: { url } }, { new: true });
+
+  if (!doc) {
+    res.status(404).json({ error: 'Short URL not found' });
+    return;
+  }
+
+  res.status(200).json(doc);
+});
+
+app.delete('/shorten/:code', async (req: Request<{ code: string }>, res: Response) => {
+  const { code } = req.params;
+
+  const deleted = await Url.findOneAndDelete({ shortCode: code });
+
+  if (!deleted) {
+    res.status(404).json({ error: 'Short URL not found' });
+    return;
+  }
+
+  res.status(204).end();
 });
 
 app.use((req: Request, res: Response) => {
