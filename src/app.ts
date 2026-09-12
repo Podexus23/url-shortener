@@ -1,6 +1,8 @@
 import express, { type Express, type Request, type Response } from 'express';
 import Url from './models/Url.js';
 import generateShortCode from './utils/generateShortCode.js';
+import { validate } from './middleware/validate.js';
+import { LinkBodySchema } from './schemas/url.js';
 
 interface UrlQuery {
   url: string;
@@ -19,19 +21,23 @@ app.get('/health', (req: Request, res: Response) => {
   res.json({ ok: true });
 });
 
-app.post('/shorten', async (req: Request<object, object, UrlQuery>, res: Response) => {
-  try {
-    const longUrl = req.body.url;
-    const url = await Url.create({
-      url: longUrl,
-      shortCode: generateShortCode(),
-    });
+app.post(
+  '/shorten',
+  validate(LinkBodySchema, 'body'),
+  async (req: Request<object, object, UrlQuery>, res: Response) => {
+    try {
+      const { url } = req.body;
+      const dbData = await Url.create({
+        url,
+        shortCode: generateShortCode(),
+      });
 
-    res.status(201).json(url);
-  } catch (error) {
-    res.status(400).json({ error: error });
+      res.status(201).json(dbData);
+    } catch (error) {
+      res.status(400).json({ error: error });
+    }
   }
-});
+);
 
 app.get('/shorten/:code', async (req: Request<{ code: string }>, res: Response) => {
   const { code } = req.params;
@@ -49,19 +55,23 @@ app.get('/shorten/:code', async (req: Request<{ code: string }>, res: Response) 
   res.status(200).json(doc);
 });
 
-app.put('/shorten/:code', async (req: Request<{ code: string }, object, UrlQuery>, res: Response) => {
-  const { code } = req.params;
-  const { url } = req.body;
+app.put(
+  '/shorten/:code',
+  validate(LinkBodySchema, 'body'),
+  async (req: Request<{ code: string }, object, UrlQuery>, res: Response) => {
+    const { code } = req.params;
+    const { url } = req.body;
 
-  const doc = await Url.findOneAndUpdate({ shortCode: code }, { $set: { url } }, { returnDocument: 'after' });
+    const doc = await Url.findOneAndUpdate({ shortCode: code }, { $set: { url } }, { returnDocument: 'after' });
 
-  if (!doc) {
-    res.status(404).json({ error: 'Short URL not found' });
-    return;
+    if (!doc) {
+      res.status(404).json({ error: 'Short URL not found' });
+      return;
+    }
+
+    res.status(200).json(doc);
   }
-
-  res.status(200).json(doc);
-});
+);
 
 app.delete('/shorten/:code', async (req: Request<{ code: string }>, res: Response) => {
   const { code } = req.params;
