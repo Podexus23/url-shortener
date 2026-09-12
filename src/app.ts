@@ -3,6 +3,7 @@ import Url from './models/Url.js';
 import generateShortCode from './utils/generateShortCode.js';
 import { validate } from './middleware/validate.js';
 import { LinkBodySchema } from './schemas/url.js';
+import { createWithUniqueCode } from './utils/createWithUniqueCode.js';
 
 interface UrlQuery {
   url: string;
@@ -27,10 +28,7 @@ app.post(
   async (req: Request<object, object, UrlQuery>, res: Response) => {
     try {
       const { url } = req.body;
-      const dbData = await Url.create({
-        url,
-        shortCode: generateShortCode(),
-      });
+      const dbData = await createWithUniqueCode(url, generateShortCode);
 
       res.status(201).json(dbData);
     } catch (error) {
