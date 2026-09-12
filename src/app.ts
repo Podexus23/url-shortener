@@ -4,6 +4,10 @@ import generateShortCode from './utils/generateShortCode.js';
 import { validate } from './middleware/validate.js';
 import { LinkBodySchema } from './schemas/url.js';
 import { createWithUniqueCode } from './utils/createWithUniqueCode.js';
+import { notFoundHandler } from './middleware/notFoundHandler.js';
+import { errorHandler } from './middleware/errorHandler.js';
+import { asyncHandler } from './utils/asyncHandler.js';
+import { NotFoundError } from './errors/AppError.js';
 
 interface UrlQuery {
   url: string;
@@ -25,67 +29,66 @@ app.get('/health', (req: Request, res: Response) => {
 app.post(
   '/shorten',
   validate(LinkBodySchema, 'body'),
-  async (req: Request<object, object, UrlQuery>, res: Response) => {
-    try {
-      const { url } = req.body;
-      const dbData = await createWithUniqueCode(url, generateShortCode);
+  asyncHandler(async (req: Request<object, object, UrlQuery>, res: Response) => {
+    const { url } = req.body;
+    const dbData = await createWithUniqueCode(url, generateShortCode);
 
-      res.status(201).json(dbData);
-    } catch (error) {
-      res.status(400).json({ error: error });
-    }
-  }
+    res.status(201).json(dbData);
+  })
 );
 
-app.get('/shorten/:code', async (req: Request<{ code: string }>, res: Response) => {
-  const { code } = req.params;
+app.get(
+  '/shorten/:code',
+  asyncHandler(async (req: Request<{ code: string }>, res: Response) => {
+    const { code } = req.params;
 
-  const doc = await Url.findOneAndUpdate(
-    { shortCode: code },
-    { $inc: { accessCount: 1 } },
-    { returnDocument: 'after' }
-  );
+    const doc = await Url.findOneAndUpdate(
+      { shortCode: code },
+      { $inc: { accessCount: 1 } },
+      { returnDocument: 'after' }
+    );
 
-  if (!doc) {
-    res.status(404).json({ error: 'Short URL not found' });
-    return;
-  }
-  res.status(200).json(doc);
-});
+    if (!doc) {
+      throw new NotFoundError(`Short URL: ${code} not found`);
+    }
+    res.status(200).json(doc);
+  })
+);
 
 app.put(
   '/shorten/:code',
   validate(LinkBodySchema, 'body'),
-  async (req: Request<{ code: string }, object, UrlQuery>, res: Response) => {
+  asyncHandler(async (req: Request<{ code: string }, object, UrlQuery>, res: Response) => {
     const { code } = req.params;
     const { url } = req.body;
 
     const doc = await Url.findOneAndUpdate({ shortCode: code }, { $set: { url } }, { returnDocument: 'after' });
 
     if (!doc) {
-      res.status(404).json({ error: 'Short URL not found' });
-      return;
+      throw new NotFoundError(`Short URL: ${code} not found`);
     }
 
     res.status(200).json(doc);
-  }
+  })
 );
 
-app.delete('/shorten/:code', async (req: Request<{ code: string }>, res: Response) => {
-  const { code } = req.params;
+app.delete(
+  '/shorten/:code',
+  asyncHandler(async (req: Request<{ code: string }>, res: Response) => {
+    const { code } = req.params;
 
-  const deleted = await Url.findOneAndDelete({ shortCode: code });
+    const deleted = await Url.findOneAndDelete({ shortCode: code });
 
-  if (!deleted) {
-    res.status(404).json({ error: 'Short URL not found' });
-    return;
-  }
+    if (!deleted) {
+      throw new NotFoundError(`Short URL: ${code} not found`);
+    }
 
-  res.status(204).end();
-});
+    res.status(204).end();
+  })
+);
 
-app.use((req: Request, res: Response) => {
-  res.status(404).json({ error: 'Route not found' });
-});
+app.use(notFoundHandler);
+
+app.use(errorHandler);
 
 export default app;
