@@ -36,7 +36,11 @@ app.post('/shorten', async (req: Request<object, object, UrlQuery>, res: Respons
 app.get('/shorten/:code', async (req: Request<{ code: string }>, res: Response) => {
   const { code } = req.params;
 
-  const doc = await Url.findOne({ shortCode: code });
+  const doc = await Url.findOneAndUpdate(
+    { shortCode: code },
+    { $inc: { accessCount: 1 } },
+    { returnDocument: 'after' }
+  );
 
   if (!doc) {
     res.status(404).json({ error: 'Short URL not found' });
@@ -49,7 +53,7 @@ app.put('/shorten/:code', async (req: Request<{ code: string }, object, UrlQuery
   const { code } = req.params;
   const { url } = req.body;
 
-  const doc = await Url.findOneAndUpdate({ shortCode: code }, { $set: { url } }, { new: true });
+  const doc = await Url.findOneAndUpdate({ shortCode: code }, { $set: { url } }, { returnDocument: 'after' });
 
   if (!doc) {
     res.status(404).json({ error: 'Short URL not found' });

@@ -4,6 +4,7 @@ const urlSchema = new Schema(
   {
     url: String,
     shortCode: { type: String, require: true, unique: true, index: true },
+    accessCount: { type: Number, default: 0 },
   },
   { timestamps: true }
 );
