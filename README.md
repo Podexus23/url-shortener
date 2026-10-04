@@ -143,3 +143,5 @@ url-shortener/
 npm test              # Run all tests
 npm run test:coverage # View coverage report
 ```
+
+Made as part of a course of learning node JS: https://roadmap.sh/projects/url-shortening-service
